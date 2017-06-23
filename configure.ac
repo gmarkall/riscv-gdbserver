@@ -43,17 +43,33 @@ AC_PROG_INSTALL
 # Add -Werror to the CXXFLAGS. For now this is not configurable.
 CXXFLAGS="$CXXFLAGS -Werror -std=gnu++11"
 
-# Add the supplied VTESTBENCH dir to CPPFLAGS
-#CPPFLAGS="$CPPFLAGS -I$VTESTBENCH"
+AC_MSG_CHECKING([pkg-config m4 macros])
+if test m4_ifdef([PKG_CHECK_MODULES], [yes], [no]) == yes; then
+	AC_MSG_RESULT([yes]);
+else
+	AC_MSG_RESULT([no]);
+	AC_MSG_ERROR([
+pkg-config is required.
+See pkg-config.freedesktop.org])
+fi
 
-# We need to know where the generic verilator headers are
+# Try to locate the Verilator headers using pkg-config
+PKG_CHECK_MODULES([VERILATOR], [verilator >= 3.905],
+                  [VERILATOR_PC=1], [VERILATOR_PC=0])
+
+# If we don't find the Verilator headers with pkg-config, they can be manually
+# specified.
 AC_ARG_WITH(
 	[verilator-headers],
 	AC_HELP_STRING([--with-verilator-headers],
 	               [location of standard verilator headers]),
-	[VINCDIR="$withval"],[VINCDIR="usr/share/verilator/include"])
+	[USERVINCDIR="$withval"],[USERVINCDIR=0])
 
-CPPFLAGS="$CPPFLAGS -I$VINCDIR -I$VINCDIR/vltstd"
+AS_IF(["$USERVINCDIR" != 0], [VCPPFLAGS="-I$USERVINCDIR -I$USERVINCDIR/vltstd"],
+      ["$VERILATOR_PC" == 1], [VCPPFLAGS="$VERILATOR_CFLAGS"],
+      [VCPPFLAGS="-Iusr/share/verilator/include -Iusr/share/verilator/include/vltstd"])
+
+CPPFLAGS="$CPPFLAGS $VCPPFLAGS"
 
 # We need to know where the target library and headers are for each target,
 # and the name of the top module (from which we derive the module name)
