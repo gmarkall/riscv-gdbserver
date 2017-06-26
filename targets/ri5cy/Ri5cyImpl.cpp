@@ -20,11 +20,15 @@
 // You should have received a copy of the GNU Lesser General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
+#include <iostream>
 #include <cstdint>
 #include <cstdlib>
 
 #include "Ri5cyImpl.h"
 #include "Vtop.h"
+
+using std::cerr;
+using std::endl;
 
 // Count of clock ticks
 // FIXME: Presumably this needs to be used by the Ri5cyImpl so that the
@@ -168,7 +172,7 @@ Ri5cyImpl::getInstrCount (void) const
   return mInstrCnt;
 
 }	// Ri5cyImpl::getInstrCount ()
-
+*/
 
 //! Read a register
 
@@ -182,7 +186,7 @@ Ri5cyImpl::getInstrCount (void) const
 
 std::size_t
 Ri5cyImpl::readRegister (const int  reg,
-			 uint32_t & value) const
+			 uint32_t & value)
 {
   if (!mCoreHalted)
     {
@@ -209,7 +213,7 @@ Ri5cyImpl::readRegister (const int  reg,
 
   mCpu->debug_req_i   = 1;
   mCpu->debug_addr_i  = dbg_addr;
-  mcpu->debug_we_i    = 0;
+  mCpu->debug_we_i    = 0;
 
   // Wait for the grant signal to indicate the read has been accepted.
 
@@ -240,7 +244,7 @@ Ri5cyImpl::readRegister (const int  reg,
     }
   while (mCpu->debug_rvalid_o == 0);
 
-  value = mCpu->debug_raddr_o;
+  value = mCpu->debug_rdata_o;
   return 4;
 
 }	// Ri5cyImpl::readRegister ()
@@ -272,7 +276,7 @@ Ri5cyImpl::writeRegister (const int  reg,
   return 4;
 
 }	// Ri5cyImpl::writeRegister ()
-*/
+
 
 //! Read data from memory
 
@@ -324,7 +328,7 @@ Ri5cyImpl::write (const uint32_t  addr,
   return i;
 }	// Ri5cyImpl::write ()
 
-
+/*
 //! Insert a matchpoint (breakpoint or watchpoint)
 
 //! @todo
@@ -335,7 +339,7 @@ Ri5cyImpl::write (const uint32_t  addr,
 //! @param[in] addr       Address for the matchpoint
 //! @param[in] matchType  Type of breakpoint or watchpoint
 //! @return  TRUE if the operation was successful, false otherwise.
-/*
+
 bool
 Ri5cyImpl::insertMatchpoint (const uint32_t  addr __attribute__ ((unused)),
 			     const MatchType  matchType __attribute__ ((unused)))
