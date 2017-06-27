@@ -93,9 +93,9 @@ Ri5cy::resume (ResumeType  step,
   case ResumeType::STEP:
     if (mRi5cyImpl->stepSingle ())
     {
-      return ResumeRes::TIMEOUT;
-    } else {
       return ResumeRes::INTERRUPTED;
+    } else {
+      return ResumeRes::TIMEOUT;
     }
     break;
   case ResumeType::CONTINUE:

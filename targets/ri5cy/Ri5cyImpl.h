@@ -103,7 +103,7 @@ private:
 
   //! How many cycles of reset
 
-  const int RESET_CYCLES = 5;
+  const int RESET_CYCLES = 100;
 
   // Debug registers
 
@@ -121,7 +121,7 @@ private:
   // FIXME: Changed to uint32_t to get to compile - constants too large. Check
   // the constants are correct.
   const uint32_t DBG_CTRL_HALT = 0x00010000;	//!< Halt core
-  const uint32_t DBG_CTRL_SSTE = 0x00010000;	//!< Single step core
+  const uint32_t DBG_CTRL_SSTE = 0x00000001;	//!< Single step core
 
   // GDB register numbers
 

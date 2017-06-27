@@ -92,7 +92,7 @@ Ri5cyImpl::writeProgramAddr (uint32_t value)
 {
   haltModel ();
   writeRegister (REG_PC, value);
-  resetModel ();
+  //resetModel ();
   return 4;
 }
 
@@ -116,14 +116,169 @@ Ri5cyImpl::readProgramAddr ()
 bool
 Ri5cyImpl::stepSingle ()
 {
-  uint32_t prev_pc = readProgramAddr ();
+ // uint32_t pc;
+
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_IE;
+  mCpu->debug_we_i    = 0;
+
+  // Write has succeeded when we get the grant signal asserted.
   do
-  {
-    unhaltModel ();
-    clockStep ();
-    haltModel ();
-  }
-  while (prev_pc == readProgramAddr ());
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "DBG_IE read cycle count " << mCycleCnt << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0);
+
+  std::cout << "DBG_IE is " << std::hex << mCpu->debug_rdata_o << std::dec << std::endl;
+
+
+
+// Read debug hit
+/*
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_HIT;
+  mCpu->debug_we_i    = 0;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "3 cycle count " << mCycleCnt << std::endl;
+      std::cout << "DBG_HIT at start of single step " << std::hex << mCpu->debug_rdata_o << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0 && !(mCpu->debug_rdata_o & 1));
+*/
+
+
+  //pc = readProgramAddr();
+  //std::cout << "Before sste" << std::hex << pc << std::endl;
+
+  mCpu->rstn_i        = 1;
+
+// Clearing debug hit
+/*
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_HIT;
+  mCpu->debug_we_i    = 1;
+  mCpu->debug_wdata_i = 0;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "1 cycle count " << mCycleCnt << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0);
+*/
+
+
+  // Write HALT + SSTE into the debug register
+
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_CTRL;
+  mCpu->debug_we_i    = 1;
+  mCpu->debug_wdata_i = DBG_CTRL_SSTE; // & DBG_CTRL_HALT;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "2 cycle count " << mCycleCnt << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0);
+
+
+  //pc = readProgramAddr();
+  //std::cout << "Before halt" << std::hex << pc << std::endl;
+
+// Write HALT into the debug register
+/*
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_CTRL;
+  mCpu->debug_we_i    = 1;
+  mCpu->debug_wdata_i = DBG_CTRL_HALT;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+    }
+  while (mCpu->debug_gnt_o == 0);
+*/
+
+
+// Read debug hit
+
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_HIT;
+  mCpu->debug_we_i    = 0;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "3 cycle count " << mCycleCnt << std::endl;
+      std::cout << "DBG_HIT reg " << std::hex << mCpu->debug_rdata_o << std::dec << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0 && !(mCpu->debug_rdata_o & 1));
+
+
+  // Clearing debug hit
+
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_HIT;
+  mCpu->debug_we_i    = 1;
+  mCpu->debug_wdata_i = 0;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "db_hit clear cycle count " << mCycleCnt << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0);
+
+
+
+  //pc = readProgramAddr();
+  //std::cout << "After halt" << std::hex << pc << std::endl;
+
+
+ // uint32_t prev_pc = readProgramAddr ();
+ // do
+ // {
+ //   clockStep ();
+ // }
+ // while (prev_pc == readProgramAddr ());
   return true;
 }
 
@@ -264,6 +419,8 @@ std::size_t
 Ri5cyImpl::readRegister (const int  reg,
 			 uint32_t & value)
 {
+  if (reg != REG_PC) { value = 0; return 4; }
+
   if (!mCoreHalted)
     {
       cerr << "*** ABORT ***: Attempt to read register from running core"
@@ -300,6 +457,7 @@ Ri5cyImpl::readRegister (const int  reg,
       mCpu->clk_i = 1;
       mCpu->eval ();
       mCycleCnt++;
+      std::cout << "4 cycle count " << mCycleCnt << std::endl;
     }
   while (mCpu->debug_gnt_o == 0);
 
@@ -317,6 +475,7 @@ Ri5cyImpl::readRegister (const int  reg,
       mCpu->clk_i = 1;
       mCpu->eval ();
       mCycleCnt++;
+      std::cout << "5 cycle count " << mCycleCnt << std::endl;
     }
 
   value = mCpu->debug_rdata_o;
@@ -379,6 +538,7 @@ Ri5cyImpl::writeRegister (const int  reg,
       mCpu->clk_i = 1;
       mCpu->eval ();
       mCycleCnt++;
+      std::cout << "6 cycle count " << mCycleCnt << std::endl;
     }
   while (mCpu->debug_gnt_o == 0);
 
@@ -519,8 +679,7 @@ Ri5cyImpl::resetModel (void)
   mCpu->debug_wdata_i = 0;
 
   // @todo Stray signal not yet understood
-
-  mCpu->fetch_enable_i = 1;
+  mCpu->fetch_enable_i = 0;
 
   for (int i = 0; i < RESET_CYCLES; i++)
     {
@@ -529,9 +688,74 @@ Ri5cyImpl::resetModel (void)
       mCpu->clk_i = 1;
       mCpu->eval ();
       mCycleCnt++;
+      std::cout << "7 cycle count " << mCycleCnt << std::endl;
     }
 
   haltModel ();
+
+ // Read DBG_IE
+
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_IE;
+  mCpu->debug_we_i    = 0;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "DBG_IE read cycle count " << mCycleCnt << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0);
+
+  std::cout << "DBG_IE is " << std::hex << mCpu->debug_rdata_o << std::dec << std::endl;
+
+
+
+  // Set DBG_IE
+
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_IE;
+  mCpu->debug_we_i    = 1;
+  mCpu->debug_wdata_i = 0xFF;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "DBG_IE cycle count " << mCycleCnt << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0);
+ 
+ // Read DBG_IE
+
+  mCpu->debug_req_i   = 1;
+  mCpu->debug_addr_i  = DBG_IE;
+  mCpu->debug_we_i    = 0;
+
+  // Write has succeeded when we get the grant signal asserted.
+  do
+    {
+      mCpu->clk_i = 0;
+      mCpu->eval ();
+      mCpu->clk_i = 1;
+      mCpu->eval ();
+      mCycleCnt++;
+      std::cout << "DBG_IE read cycle count " << mCycleCnt << std::endl;
+    }
+  while (mCpu->debug_gnt_o == 0);
+
+  std::cout << "DBG_IE is " << std::hex << mCpu->debug_rdata_o << std::dec << std::endl;
+
+
+  mCpu->fetch_enable_i = 1;
 
 }	// Ri5cyImpl::resetModel ()
 
@@ -564,6 +788,7 @@ Ri5cyImpl::unhaltModel (void)
       mCpu->clk_i = 1;
       mCpu->eval ();
       mCycleCnt++;
+      std::cout << "8 cycle count " << mCycleCnt << std::endl;
     }
   while (mCpu->debug_gnt_o == 0);
 
@@ -592,6 +817,7 @@ Ri5cyImpl::haltModel (void)
       mCpu->clk_i = 1;
       mCpu->eval ();
       mCycleCnt++;
+      std::cout << "9 cycle count " << mCycleCnt << std::endl;
     }
   while (mCpu->debug_gnt_o == 0);
 
